@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Professor Research Network</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/vis-network.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #222222;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        #mynetwork {
+            width: 100%;
+            height: 750px;
+            background-color: #333333;
+            border: 1px solid lightgray;
+            margin-bottom: 20px;
+        }
+
+        #controls {
+            text-align: center;
+            margin: 10px;
+        }
+
+        #controls input, #controls select, #controls button {
+            padding: 5px;
+            margin: 5px;
+        }
+
+        #controls button {
+            cursor: pointer;
+            background-color: #555;
+            color: white;
+            border: none;
+            border-radius: 3px;
+        }
+
+        #controls button:hover {
+            background-color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <input type="text" id="search-bar" placeholder="Search for a professor...">
+        <button id="search-button">Search</button>
+        <select id="cluster-filter">
+            <option value="all">All Clusters</option>
+            <option value="0">Cluster 0</option>
+            <option value="1">Cluster 1</option>
+            <option value="2">Cluster 2</option>
+            <option value="3">Cluster 3</option>
+            <option value="4">Cluster 4</option>
+        </select>
+        <button id="download-graph">Download Graph</button>
+    </div>
+
+    <div id="mynetwork"></div>
+
+    <script>
+        // Define nodes and edges
+        var nodes = new vis.DataSet([
+            { id: 1, label: "Professor A", title: "Name: Professor A<br>Cluster: 0<br>Research: AI, ML", color: "hsl(0, 80%, 60%)" },
+            { id: 2, label: "Professor B", title: "Name: Professor B<br>Cluster: 0<br>Research: Bioinformatics", color: "hsl(0, 80%, 60%)" },
+            { id: 3, label: "Professor C", title: "Name: Professor C<br>Cluster: 1<br>Research: Nanotechnology", color: "hsl(40, 80%, 60%)" },
+            { id: 4, label: "Professor D", title: "Name: Professor D<br>Cluster: 1<br>Research: Renewable Energy", color: "hsl(40, 80%, 60%)" },
+            { id: 5, label: "Professor E", title: "Name: Professor E<br>Cluster: 2<br>Research: Quantum Computing", color: "hsl(80, 80%, 60%)" }
+        ]);
+
+        var edges = new vis.DataSet([
+            { from: 1, to: 2, title: "Collaboration on AI" },
+            { from: 3, to: 4, title: "Shared Research: Nanotech" },
+            { from: 4, to: 5, title: "Interdisciplinary Research" }
+        ]);
+
+        // Create the network
+        var container = document.getElementById("mynetwork");
+        var data = { nodes: nodes, edges: edges };
+        var options = {
+            physics: {
+                enabled: false,
+                barnesHut: {
+                    gravitationalConstant: -3000,
+                    centralGravity: 0.3,
+                    springLength: 100,
+                    springConstant: 0.05,
+                    damping: 0.1
+                }
+            },
+            interaction: {
+                hover: true
+            },
+            edges: {
+                smooth: true,
+                color: { color: "#aaaaaa" }
+            }
+        };
+        var network = new vis.Network(container, data, options);
+
+        // Search functionality
+        document.getElementById("search-button").addEventListener("click", function () {
+            var query = document.getElementById("search-bar").value.toLowerCase();
+            var foundNode = null;
+
+            nodes.forEach(function (node) {
+                if (node.label.toLowerCase().includes(query)) {
+                    foundNode = node.id;
+                }
+            });
+
+            if (foundNode) {
+                network.focus(foundNode, {
+                    scale: 1.5,
+                    animation: { duration: 1000, easingFunction: "easeInOutQuad" }
+                });
+            } else {
+                alert("Professor not found!");
+            }
+        });
+
+        // Filter by cluster
+        document.getElementById("cluster-filter").addEventListener("change", function () {
+            var selectedCluster = this.value;
+            var filteredNodes;
+
+            if (selectedCluster === "all") {
+                filteredNodes = nodes.get(); // Show all nodes
+            } else {
+                filteredNodes = nodes.get().filter(function (node) {
+                    return node.title.includes(`Cluster: ${selectedCluster}`);
+                });
+            }
+
+            nodes.clear();
+            nodes.add(filteredNodes);
+        });
+
+        // Download graph as image
+        document.getElementById("download-graph").addEventListener("click", function () {
+            var canvas = document.querySelector("canvas");
+            var link = document.createElement("a");
+            link.href = canvas.toDataURL();
+            link.download = "graph.png";
+            link.click();
+        });
+
+        // Show node details on click
+        network.on("click", function (params) {
+            if (params.nodes.length) {
+                var nodeId = params.nodes[0];
+                var node = nodes.get(nodeId);
+                alert(`Name: ${node.label}\nCluster: ${node.title}`);
+            }
+        });
+    </script>
+</body>
+</html>
